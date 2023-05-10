@@ -22,4 +22,12 @@ impl<T> AsIter for Vec<T> {
     fn iter(&self) -> Self::Iterator<'_> {
         self.as_slice().iter()
     }
+
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+
+    fn len(&self) -> usize {
+        self.len()
+    }
 }

@@ -3,21 +3,12 @@ use crate::ast::{FromTokens, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use crate::Span;
 use bluejay_core::definition::EnumValueDefinitions as CoreEnumValueDefinitions;
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct EnumValueDefinitions<'a> {
     enum_value_definitions: Vec<EnumValueDefinition<'a>>,
     _span: Span,
-}
-
-impl<'a> AsIter for EnumValueDefinitions<'a> {
-    type Item = EnumValueDefinition<'a>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.enum_value_definitions.iter()
-    }
 }
 
 impl<'a> CoreEnumValueDefinitions for EnumValueDefinitions<'a> {

@@ -2,20 +2,11 @@ use crate::ast::definition::{Context, InterfaceImplementation};
 use crate::ast::{FromTokens, IsMatch, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use bluejay_core::definition::InterfaceImplementations as CoreInterfaceImplementations;
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct InterfaceImplementations<'a, C: Context + 'a> {
     interface_implementations: Vec<InterfaceImplementation<'a, C>>,
-}
-
-impl<'a, C: Context + 'a> AsIter for InterfaceImplementations<'a, C> {
-    type Item = InterfaceImplementation<'a, C>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.interface_implementations.iter()
-    }
 }
 
 impl<'a, C: Context + 'a> CoreInterfaceImplementations for InterfaceImplementations<'a, C> {

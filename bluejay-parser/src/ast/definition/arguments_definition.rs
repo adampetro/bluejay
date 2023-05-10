@@ -3,21 +3,12 @@ use crate::ast::{FromTokens, IsMatch, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use crate::Span;
 use bluejay_core::definition::ArgumentsDefinition as CoreArgumentsDefinition;
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct ArgumentsDefinition<'a, C: Context> {
     argument_definitions: Vec<InputValueDefinition<'a, C>>,
     _span: Span,
-}
-
-impl<'a, C: Context> AsIter for ArgumentsDefinition<'a, C> {
-    type Item = InputValueDefinition<'a, C>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.argument_definitions.iter()
-    }
 }
 
 impl<'a, C: Context> CoreArgumentsDefinition for ArgumentsDefinition<'a, C> {

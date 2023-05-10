@@ -2,7 +2,7 @@ use crate::ast::{FromTokens, ParseError, Tokens, TryFromTokens, Variable};
 use crate::lexical_token::{FloatValue, IntValue, Name, PunctuatorType, StringValue};
 use crate::{HasSpan, Span};
 use bluejay_core::{
-    AbstractValue, AsIter, ListValue as CoreListValue, ObjectValue as CoreObjectValue,
+    derive::AsIter, AbstractValue, ListValue as CoreListValue, ObjectValue as CoreObjectValue,
     Value as CoreValue, ValueFromAbstract,
 };
 
@@ -155,7 +155,7 @@ impl BooleanValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct ListValue<'a, const CONST: bool> {
     elements: Vec<Value<'a, CONST>>,
     span: Span,
@@ -165,16 +165,7 @@ impl<'a, const CONST: bool> CoreListValue<CONST> for ListValue<'a, CONST> {
     type Value = Value<'a, CONST>;
 }
 
-impl<'a, const CONST: bool> AsIter for ListValue<'a, CONST> {
-    type Item = Value<'a, CONST>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.elements.iter()
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct ObjectValue<'a, const CONST: bool> {
     fields: Vec<(Name<'a>, Value<'a, CONST>)>,
     span: Span,
@@ -187,15 +178,6 @@ impl<'a, const CONST: bool> CoreObjectValue<CONST> for ObjectValue<'a, CONST> {
 
     fn iter(&self) -> Self::Iterator<'_> {
         self.fields.iter().map(|(key, value)| (key, value))
-    }
-}
-
-impl<'a, const CONST: bool> AsIter for ObjectValue<'a, CONST> {
-    type Item = (Name<'a>, Value<'a, CONST>);
-    type Iterator<'b> = std::slice::Iter<'b, (Name<'a>, Value<'a, CONST>)> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.fields.iter()
     }
 }
 

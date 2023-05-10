@@ -2,6 +2,7 @@
 members = [
     "bluejay-parser",
     "bluejay-core",
+    "bluejay-core-macro",
     "bluejay-printer",
     "bluejay-validator",
 ]

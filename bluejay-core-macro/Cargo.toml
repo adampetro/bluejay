@@ -1,0 +1,18 @@
+[package]
+name = "bluejay-core-macro"
+version = "0.1.0-alpha.3"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/adampetro/bluejay"
+homepage = "https://github.com/adampetro/bluejay"
+keywords = ["graphql"]
+exclude = [".gitignore"]
+description = "Macros for `bluejay-core`"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "1.0" }
+quote = "1.0"
+proc-macro2 = "1.0.43"

@@ -3,21 +3,12 @@ use crate::ast::{FromTokens, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use crate::Span;
 use bluejay_core::definition::FieldsDefinition as CoreFieldsDefinition;
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct FieldsDefinition<'a, C: Context> {
     field_definitions: Vec<FieldDefinition<'a, C>>,
     _span: Span,
-}
-
-impl<'a, C: Context> AsIter for FieldsDefinition<'a, C> {
-    type Item = FieldDefinition<'a, C>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.field_definitions.iter()
-    }
 }
 
 impl<'a, C: Context> CoreFieldsDefinition for FieldsDefinition<'a, C> {

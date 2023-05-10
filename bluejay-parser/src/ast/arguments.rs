@@ -1,9 +1,9 @@
 use crate::ast::{Argument, FromTokens, IsMatch, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use crate::{HasSpan, Span};
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct Arguments<'a, const CONST: bool> {
     arguments: Vec<Argument<'a, CONST>>,
     span: Span,
@@ -40,13 +40,4 @@ impl<'a, const CONST: bool> HasSpan for Arguments<'a, CONST> {
 
 impl<'a, const CONST: bool> bluejay_core::Arguments<CONST> for Arguments<'a, CONST> {
     type Argument = Argument<'a, CONST>;
-}
-
-impl<'a, const CONST: bool> AsIter for Arguments<'a, CONST> {
-    type Item = Argument<'a, CONST>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.arguments.iter()
-    }
 }

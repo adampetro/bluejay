@@ -23,3 +23,7 @@ pub use value::{
     AbstractConstValue, AbstractValue, AbstractVariableValue, ListValue, ObjectValue, Value,
     ValueFromAbstract, Variable,
 };
+
+pub mod derive {
+    pub use bluejay_core_macro::AsIter;
+}

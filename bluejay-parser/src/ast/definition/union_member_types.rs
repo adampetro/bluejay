@@ -2,20 +2,11 @@ use crate::ast::definition::{Context, UnionMemberType};
 use crate::ast::{FromTokens, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use bluejay_core::definition::UnionMemberTypes as CoreUnionMemberTypes;
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct UnionMemberTypes<'a, C: Context> {
     union_member_types: Vec<UnionMemberType<'a, C>>,
-}
-
-impl<'a, C: Context> AsIter for UnionMemberTypes<'a, C> {
-    type Item = UnionMemberType<'a, C>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.union_member_types.iter()
-    }
 }
 
 impl<'a, C: Context> CoreUnionMemberTypes for UnionMemberTypes<'a, C> {

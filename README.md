@@ -10,6 +10,7 @@
 
 ## Crates
 
+- [`bluejay-core-macro`](/bluejay-core-macro/README.md)
 - [`bluejay-core`](/bluejay-core/README.md)
 - [`bluejay-parser`](/bluejay-parser/README.md)
 - [`bluejay-printer`](/bluejay-printer/README.md)

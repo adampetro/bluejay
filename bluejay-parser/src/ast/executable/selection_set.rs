@@ -2,11 +2,11 @@ use crate::ast::executable::Selection;
 use crate::ast::{FromTokens, IsMatch, ParseError, Tokens};
 use crate::lexical_token::PunctuatorType;
 use crate::{HasSpan, Span};
-use bluejay_core::AsIter;
+use bluejay_core::derive::AsIter;
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use std::hash::{Hash, Hasher};
 
-#[derive(Debug)]
+#[derive(Debug, AsIter)]
 pub struct SelectionSet<'a> {
     selections: Vec<Selection<'a>>,
     span: Span,
@@ -35,19 +35,6 @@ impl<'a> IsMatch<'a> for SelectionSet<'a> {
 
 impl<'a> bluejay_core::executable::SelectionSet for SelectionSet<'a> {
     type Selection = Selection<'a>;
-}
-
-impl<'a> AsIter for SelectionSet<'a> {
-    type Item = Selection<'a>;
-    type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
-
-    fn iter(&self) -> Self::Iterator<'_> {
-        self.selections.iter()
-    }
-
-    fn len(&self) -> usize {
-        self.selections.len()
-    }
 }
 
 impl<'a> HasSpan for SelectionSet<'a> {
