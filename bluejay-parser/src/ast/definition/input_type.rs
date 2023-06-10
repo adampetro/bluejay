@@ -9,13 +9,23 @@ use bluejay_core::definition::{
     BaseInputType as CoreBaseInputType, BaseInputTypeReference, InputType as CoreInputType,
     InputTypeReference,
 };
+use bluejay_core::BuiltinScalarDefinition;
 use once_cell::sync::OnceCell;
 use std::marker::PhantomData;
+use std::sync::Arc;
+
+#[derive(Debug)]
+enum BaseInner<'a, C: Context + 'a> {
+    BuiltinScalar(BuiltinScalarDefinition),
+    CustomScalar(Arc<CustomScalarTypeDefinition<'a, C>>),
+    Enum(Arc<EnumTypeDefinition<'a>>),
+    InputObject(Arc<InputObjectTypeDefinition<'a, C>>),
+}
 
 #[derive(Debug)]
 pub struct BaseInputType<'a, C: Context + 'a> {
     name: Name<'a>,
-    r#type: OnceCell<BaseInputTypeReference<'a, Self>>,
+    inner: OnceCell<BaseInner<'a, C>>,
     context: PhantomData<C>,
 }
 
@@ -24,8 +34,13 @@ impl<'a, C: Context + 'a> CoreBaseInputType for BaseInputType<'a, C> {
     type EnumTypeDefinition = EnumTypeDefinition<'a>;
     type InputObjectTypeDefinition = InputObjectTypeDefinition<'a, C>;
 
-    fn as_ref(&self) -> BaseInputTypeReference<'a, Self> {
-        *self.r#type.get().unwrap()
+    fn as_ref(&self) -> BaseInputTypeReference<'_, Self> {
+        match self.inner.get().unwrap() {
+            BaseInner::BuiltinScalar(bstd) => BaseInputTypeReference::BuiltinScalar(*bstd),
+            BaseInner::CustomScalar(cstd) => BaseInputTypeReference::CustomScalar(cstd.as_ref()),
+            BaseInner::Enum(etd) => BaseInputTypeReference::Enum(etd.as_ref()),
+            BaseInner::InputObject(iotd) => BaseInputTypeReference::InputObject(iotd.as_ref()),
+        }
     }
 }
 
@@ -34,25 +49,18 @@ impl<'a, C: Context + 'a> BaseInputType<'a, C> {
         &self.name
     }
 
-    pub(crate) fn set_type(
-        &self,
-        type_reference: BaseInputTypeReference<'a, Self>,
-    ) -> Result<(), BaseInputTypeReference<'a, Self>> {
-        self.r#type.set(type_reference)
-    }
-
-    pub(crate) fn core_type_from_type_definition(
-        type_definition: &'a TypeDefinition<'a, C>,
-    ) -> Result<BaseInputTypeReference<'a, Self>, ()> {
-        match type_definition {
-            TypeDefinition::BuiltinScalar(bstd) => Ok(BaseInputTypeReference::BuiltinScalar(*bstd)),
-            TypeDefinition::CustomScalar(cstd) => Ok(BaseInputTypeReference::CustomScalar(cstd)),
-            TypeDefinition::Enum(etd) => Ok(BaseInputTypeReference::Enum(etd)),
-            TypeDefinition::InputObject(iotd) => Ok(BaseInputTypeReference::InputObject(iotd)),
+    pub(crate) fn set_type(&self, type_definition: &TypeDefinition<'a, C>) -> Result<(), ()> {
+        let inner = match type_definition {
+            TypeDefinition::BuiltinScalar(bstd) => Ok(BaseInner::BuiltinScalar(*bstd)),
+            TypeDefinition::CustomScalar(cstd) => Ok(BaseInner::CustomScalar(cstd.clone())),
+            TypeDefinition::Enum(etd) => Ok(BaseInner::Enum(etd.clone())),
+            TypeDefinition::InputObject(iotd) => Ok(BaseInner::InputObject(iotd.clone())),
             TypeDefinition::Interface(_) | TypeDefinition::Object(_) | TypeDefinition::Union(_) => {
                 Err(())
             }
-        }
+        }?;
+
+        self.inner.set(inner).map_err(|_| ())
     }
 }
 
@@ -90,7 +98,7 @@ impl<'a, C: Context + 'a> FromTokens<'a> for InputType<'a, C> {
             };
             let base = BaseInputType {
                 name: base_name,
-                r#type: OnceCell::new(),
+                inner: OnceCell::new(),
                 context: Default::default(),
             };
             Ok(InputType::Base(base, bang_span.is_some(), span))

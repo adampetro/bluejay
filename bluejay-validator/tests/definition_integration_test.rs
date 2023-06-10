@@ -10,7 +10,7 @@ fn test_error() {
         let input = std::fs::read_to_string(path).unwrap();
         let definition_document: DefinitionDocument = DefinitionDocument::parse(&input)
             .unwrap_or_else(|_| panic!("Schema `{}` had parse errors", path.display()));
-        let schema_definition = SchemaDefinition::try_from(&definition_document)
+        let schema_definition = SchemaDefinition::try_from(definition_document)
             .unwrap_or_else(|_| panic!("Schema `{}` had coercion errors", path.display()));
 
         let errors: Vec<_> = BuiltinRulesValidator::validate(&schema_definition).collect();
@@ -26,7 +26,7 @@ fn test_valid() {
         let input = std::fs::read_to_string(path).unwrap();
         let definition_document: DefinitionDocument = DefinitionDocument::parse(&input)
             .unwrap_or_else(|_| panic!("Schema `{}` had parse errors", path.display()));
-        let schema_definition = SchemaDefinition::try_from(&definition_document)
+        let schema_definition = SchemaDefinition::try_from(definition_document)
             .unwrap_or_else(|_| panic!("Schema `{}` had coercion errors", path.display()));
 
         let errors: Vec<_> = BuiltinRulesValidator::validate(&schema_definition).collect();

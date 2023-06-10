@@ -56,7 +56,7 @@ fn generate_schema(input: Input, module: &mut syn::ItemMod) -> syn::Result<()> {
 
     let definition_document: DefinitionDocument = DefinitionDocument::parse(&schema_contents)
         .map_err(|errors| map_parser_errors(schema, &schema_contents, errors))?;
-    let schema_definition = SchemaDefinition::try_from(&definition_document)
+    let schema_definition = SchemaDefinition::try_from(definition_document)
         .map_err(|errors| map_parser_errors(schema, &schema_contents, errors))?;
     let schema_errors: Vec<_> = BuiltinRulesValidator::validate(&schema_definition).collect();
     if !schema_errors.is_empty() {

@@ -15,51 +15,51 @@ use std::ops::Not;
 pub enum DefinitionDocumentError<'a, C: Context> {
     DuplicateDirectiveDefinitions {
         name: &'a str,
-        definitions: Vec<&'a DirectiveDefinition<'a, C>>,
+        definitions: Vec<DirectiveDefinition<'a, C>>,
     },
     DuplicateTypeDefinitions {
         name: &'a str,
-        definitions: Vec<&'a TypeDefinition<'a, C>>,
+        definitions: Vec<TypeDefinition<'a, C>>,
     },
     ImplicitRootOperationTypeNotAnObject {
-        definition: &'a TypeDefinition<'a, C>,
+        definition: TypeDefinition<'a, C>,
     },
     ExplicitRootOperationTypeNotAnObject {
-        name: &'a Name<'a>,
+        name: Name<'a>,
     },
     ImplicitSchemaDefinitionMissingQuery,
     ExplicitSchemaDefinitionMissingQuery {
-        definition: &'a ExplicitSchemaDefinition<'a>,
+        definition: ExplicitSchemaDefinition<'a>,
     },
     DuplicateExplicitSchemaDefinitions {
-        definitions: &'a [ExplicitSchemaDefinition<'a>],
+        definitions: Vec<ExplicitSchemaDefinition<'a>>,
     },
     ImplicitAndExplicitSchemaDefinitions {
         implicit: ImplicitSchemaDefinition<'a, C>,
-        explicit: &'a ExplicitSchemaDefinition<'a>,
+        explicit: ExplicitSchemaDefinition<'a>,
     },
     DuplicateExplicitRootOperationDefinitions {
         operation_type: OperationType,
-        root_operation_type_definitions: Vec<&'a RootOperationTypeDefinition<'a>>,
+        root_operation_type_definitions: Vec<RootOperationTypeDefinition<'a>>,
     },
     ExplicitRootOperationTypeDoesNotExist {
-        root_operation_type_definition: &'a RootOperationTypeDefinition<'a>,
+        root_operation_type_definition: RootOperationTypeDefinition<'a>,
     },
     NoSchemaDefinition,
     ReferencedTypeDoesNotExist {
-        name: &'a Name<'a>,
+        name: Name<'a>,
     },
     ReferencedTypeIsNotAnOutputType {
-        name: &'a Name<'a>,
+        name: Name<'a>,
     },
     ReferencedTypeIsNotAnInputType {
-        name: &'a Name<'a>,
+        name: Name<'a>,
     },
     ReferencedUnionMemberTypeIsNotAnObject {
-        name: &'a Name<'a>,
+        name: Name<'a>,
     },
     ReferencedTypeIsNotAnInterface {
-        name: &'a Name<'a>,
+        name: Name<'a>,
     },
 }
 
@@ -67,11 +67,7 @@ impl<'a, C: Context> From<DefinitionDocumentError<'a, C>> for Error {
     fn from(value: DefinitionDocumentError<C>) -> Self {
         match value {
             DefinitionDocumentError::DuplicateDirectiveDefinitions { name, definitions } => {
-                let message = if definitions
-                    .iter()
-                    .copied()
-                    .any(CoreDirectiveDefinition::is_builtin)
-                {
+                let message = if definitions.iter().any(|dd| dd.is_builtin()) {
                     format!("Cannot redefine builtin directive @{name}")
                 } else {
                     format!("Multiple directive definitions with name `@{name}`")

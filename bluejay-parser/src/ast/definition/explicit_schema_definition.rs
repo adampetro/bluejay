@@ -17,16 +17,8 @@ impl<'a> ExplicitSchemaDefinition<'a> {
     pub(crate) const SCHEMA_IDENTIFIER: &'static str = "schema";
     const IMPLICIT_OPERATION_TYPE_NAMES: [&'static str; 3] = ["Query", "Mutation", "Subscription"];
 
-    pub(crate) fn description(&self) -> Option<&StringValue> {
-        self.description.as_ref()
-    }
-
     pub(crate) fn root_operation_type_definitions(&self) -> &[RootOperationTypeDefinition<'a>] {
         &self.root_operation_type_definitions
-    }
-
-    pub(crate) fn directives(&self) -> Option<&ConstDirectives<'a>> {
-        self.directives.as_ref()
     }
 
     pub(crate) fn uses_implicit_names(&self) -> bool {
@@ -41,6 +33,14 @@ impl<'a> ExplicitSchemaDefinition<'a> {
 
     pub(crate) fn root_operation_type_definitions_span(&self) -> &Span {
         &self.root_operation_type_definitions_span
+    }
+}
+
+impl<'a> From<ExplicitSchemaDefinition<'a>>
+    for (Option<StringValue<'a>>, Option<ConstDirectives<'a>>)
+{
+    fn from(value: ExplicitSchemaDefinition<'a>) -> Self {
+        (value.description, value.directives)
     }
 }
 
@@ -75,7 +75,7 @@ impl<'a> FromTokens<'a> for ExplicitSchemaDefinition<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RootOperationTypeDefinition<'a> {
     operation_type: OperationType,
     name: Name<'a>,

@@ -26,7 +26,7 @@ fn test_combine_executable_rules() {
     let definition_document: DefinitionDocument =
         DefinitionDocument::parse("type Query { foo: String! }").expect("Schema had parse errors");
     let schema_definition: SchemaDefinition =
-        SchemaDefinition::try_from(&definition_document).expect("Schema had errors");
+        SchemaDefinition::try_from(definition_document).expect("Schema had errors");
     let executable_document_str = "{ foo }";
     let executable_document =
         ExecutableDocument::parse(executable_document_str).expect("Document had parse errors");

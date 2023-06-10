@@ -3,11 +3,12 @@ use crate::ast::{FromTokens, ParseError, Tokens};
 use crate::lexical_token::Name;
 use bluejay_core::definition::UnionMemberType as CoreUnionMemberType;
 use once_cell::sync::OnceCell;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct UnionMemberType<'a, C: Context> {
     name: Name<'a>,
-    r#type: OnceCell<&'a ObjectTypeDefinition<'a, C>>,
+    r#type: OnceCell<Arc<ObjectTypeDefinition<'a, C>>>,
 }
 
 impl<'a, C: Context> CoreUnionMemberType for UnionMemberType<'a, C> {
@@ -25,8 +26,8 @@ impl<'a, C: Context> UnionMemberType<'a, C> {
 
     pub(crate) fn set_type(
         &self,
-        type_definition: &'a ObjectTypeDefinition<'a, C>,
-    ) -> Result<(), &'a ObjectTypeDefinition<'a, C>> {
+        type_definition: Arc<ObjectTypeDefinition<'a, C>>,
+    ) -> Result<(), Arc<ObjectTypeDefinition<'a, C>>> {
         self.r#type.set(type_definition)
     }
 }

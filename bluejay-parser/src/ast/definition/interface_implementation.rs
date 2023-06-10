@@ -3,11 +3,12 @@ use crate::ast::{FromTokens, ParseError, Tokens};
 use crate::lexical_token::Name;
 use bluejay_core::definition::InterfaceImplementation as CoreInterfaceImplementation;
 use once_cell::sync::OnceCell;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct InterfaceImplementation<'a, C: Context> {
     name: Name<'a>,
-    r#type: OnceCell<&'a InterfaceTypeDefinition<'a, C>>,
+    r#type: OnceCell<Arc<InterfaceTypeDefinition<'a, C>>>,
 }
 
 impl<'a, C: Context> CoreInterfaceImplementation for InterfaceImplementation<'a, C> {
@@ -21,8 +22,8 @@ impl<'a, C: Context> CoreInterfaceImplementation for InterfaceImplementation<'a,
 impl<'a, C: Context> InterfaceImplementation<'a, C> {
     pub(crate) fn set_type(
         &self,
-        type_reference: &'a InterfaceTypeDefinition<'a, C>,
-    ) -> Result<(), &'a InterfaceTypeDefinition<'a, C>> {
+        type_reference: Arc<InterfaceTypeDefinition<'a, C>>,
+    ) -> Result<(), Arc<InterfaceTypeDefinition<'a, C>>> {
         self.r#type.set(type_reference)
     }
 

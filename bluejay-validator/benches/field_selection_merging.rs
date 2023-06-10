@@ -44,10 +44,10 @@ fn build_query_string(repetitions: u64) -> String {
     s
 }
 
-static DEFINITION_DOCUMENT: Lazy<DefinitionDocument<'static>> =
-    Lazy::new(|| DefinitionDocument::parse(SCHEMA).expect("Schema had parse errors"));
-static SCHEMA_DEFINITION: Lazy<SchemaDefinition<'static>> =
-    Lazy::new(|| SchemaDefinition::try_from(&*DEFINITION_DOCUMENT).expect("Schema had errors"));
+static SCHEMA_DEFINITION: Lazy<SchemaDefinition<'static>> = Lazy::new(|| {
+    let definition_document = DefinitionDocument::parse(SCHEMA).expect("Schema had parse errors");
+    SchemaDefinition::try_from(definition_document).expect("Schema had errors")
+});
 
 const REPETITIONS: &'static [u64] = &[1, 2, 4, 8, 16, 32, 64, 128];
 

@@ -433,11 +433,11 @@ mod tests {
     }
     "#;
 
-    static DEFINITION_DOCUMENT: Lazy<DefinitionDocument<'static, CustomContext>> =
-        Lazy::new(|| DefinitionDocument::parse(SCHEMA).expect("Schema had parse errors"));
     static SCHEMA_DEFINITION: Lazy<ParserSchemaDefinition<'static, CustomContext>> =
         Lazy::new(|| {
-            ParserSchemaDefinition::try_from(&*DEFINITION_DOCUMENT).expect("Schema had errors")
+            let definition_document =
+                DefinitionDocument::parse(SCHEMA).expect("Schema had parse errors");
+            ParserSchemaDefinition::try_from(definition_document).expect("Schema had errors")
         });
 
     fn input_type(

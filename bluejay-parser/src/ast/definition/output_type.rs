@@ -9,13 +9,25 @@ use bluejay_core::definition::{
     BaseOutputType as CoreBaseOutputType, BaseOutputTypeReference, OutputType as CoreOutputType,
     OutputTypeReference,
 };
+use bluejay_core::BuiltinScalarDefinition;
 use once_cell::sync::OnceCell;
 use std::marker::PhantomData;
+use std::sync::Arc;
+
+#[derive(Debug)]
+enum BaseInner<'a, C: Context + 'a> {
+    BuiltinScalar(BuiltinScalarDefinition),
+    CustomScalar(Arc<CustomScalarTypeDefinition<'a, C>>),
+    Enum(Arc<EnumTypeDefinition<'a>>),
+    Interface(Arc<InterfaceTypeDefinition<'a, C>>),
+    Object(Arc<ObjectTypeDefinition<'a, C>>),
+    Union(Arc<UnionTypeDefinition<'a, C>>),
+}
 
 #[derive(Debug)]
 pub struct BaseOutputType<'a, C: Context + 'a> {
     name: Name<'a>,
-    r#type: OnceCell<BaseOutputTypeReference<'a, Self>>,
+    inner: OnceCell<BaseInner<'a, C>>,
     context: PhantomData<C>,
 }
 
@@ -27,7 +39,14 @@ impl<'a, C: Context + 'a> CoreBaseOutputType for BaseOutputType<'a, C> {
     type UnionTypeDefinition = UnionTypeDefinition<'a, C>;
 
     fn as_ref(&self) -> BaseOutputTypeReference<'_, Self> {
-        *self.r#type.get().unwrap()
+        match self.inner.get().unwrap() {
+            BaseInner::BuiltinScalar(bstd) => BaseOutputTypeReference::BuiltinScalar(*bstd),
+            BaseInner::CustomScalar(cstd) => BaseOutputTypeReference::CustomScalar(cstd.as_ref()),
+            BaseInner::Enum(etd) => BaseOutputTypeReference::Enum(etd.as_ref()),
+            BaseInner::Interface(itd) => BaseOutputTypeReference::Interface(itd.as_ref()),
+            BaseInner::Object(otd) => BaseOutputTypeReference::Object(otd.as_ref()),
+            BaseInner::Union(utd) => BaseOutputTypeReference::Union(utd.as_ref()),
+        }
     }
 }
 
@@ -35,36 +54,27 @@ impl<'a, C: Context + 'a> BaseOutputType<'a, C> {
     fn new(name: Name<'a>) -> Self {
         Self {
             name,
-            r#type: OnceCell::new(),
+            inner: OnceCell::new(),
             context: Default::default(),
         }
     }
 
-    pub(crate) fn set_type(
-        &self,
-        type_reference: BaseOutputTypeReference<'a, Self>,
-    ) -> Result<(), BaseOutputTypeReference<'a, Self>> {
-        self.r#type.set(type_reference)
+    pub(crate) fn set_type(&self, type_definition: &TypeDefinition<'a, C>) -> Result<(), ()> {
+        let inner = match type_definition {
+            TypeDefinition::BuiltinScalar(bstd) => Ok(BaseInner::BuiltinScalar(*bstd)),
+            TypeDefinition::CustomScalar(cstd) => Ok(BaseInner::CustomScalar(cstd.clone())),
+            TypeDefinition::Enum(etd) => Ok(BaseInner::Enum(etd.clone())),
+            TypeDefinition::InputObject(_) => Err(()),
+            TypeDefinition::Interface(itd) => Ok(BaseInner::Interface(itd.clone())),
+            TypeDefinition::Object(otd) => Ok(BaseInner::Object(otd.clone())),
+            TypeDefinition::Union(utd) => Ok(BaseInner::Union(utd.clone())),
+        }?;
+
+        self.inner.set(inner).map_err(|_| ())
     }
 
     pub(crate) fn name(&self) -> &Name<'a> {
         &self.name
-    }
-
-    pub(crate) fn core_type_from_type_definition(
-        type_definition: &'a TypeDefinition<'a, C>,
-    ) -> Result<BaseOutputTypeReference<'a, Self>, ()> {
-        match type_definition {
-            TypeDefinition::BuiltinScalar(bstd) => {
-                Ok(BaseOutputTypeReference::BuiltinScalar(*bstd))
-            }
-            TypeDefinition::CustomScalar(cstd) => Ok(BaseOutputTypeReference::CustomScalar(cstd)),
-            TypeDefinition::Enum(etd) => Ok(BaseOutputTypeReference::Enum(etd)),
-            TypeDefinition::InputObject(_) => Err(()),
-            TypeDefinition::Interface(itd) => Ok(BaseOutputTypeReference::Interface(itd)),
-            TypeDefinition::Object(otd) => Ok(BaseOutputTypeReference::Object(otd)),
-            TypeDefinition::Union(utd) => Ok(BaseOutputTypeReference::Union(utd)),
-        }
     }
 }
 

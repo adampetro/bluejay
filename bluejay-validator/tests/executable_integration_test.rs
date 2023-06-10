@@ -47,6 +47,6 @@ fn with_schema(f: fn(SchemaDefinition) -> ()) {
     let definition_document =
         DefinitionDocument::parse(s.as_str()).expect("Schema had parse errors");
     let schema_definition =
-        SchemaDefinition::try_from(&definition_document).expect("Schema had errors");
+        SchemaDefinition::try_from(definition_document).expect("Schema had errors");
     f(schema_definition)
 }
