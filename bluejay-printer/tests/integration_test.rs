@@ -1,3 +1,4 @@
+use bluejay_core::definition::visibility_scoped::{self, Cache, NullWarden};
 use bluejay_parser::ast::definition::{DefinitionDocument, SchemaDefinition};
 use bluejay_printer::definition::DisplaySchemaDefinition;
 
@@ -7,7 +8,11 @@ fn test_printer() {
     let original_document: DefinitionDocument = DefinitionDocument::parse(s.as_str()).unwrap();
     let original_schema_definition = SchemaDefinition::try_from(&original_document).unwrap();
 
-    let printed = DisplaySchemaDefinition::to_string(&original_schema_definition);
+    let warden = NullWarden::default();
+    let cache = Cache::new(&original_schema_definition, &warden);
+    let scoped_schema_definition = visibility_scoped::SchemaDefinition::new(&cache);
+
+    let printed = DisplaySchemaDefinition::to_string(&scoped_schema_definition);
     insta::assert_snapshot!(printed);
 
     let printed_document: DefinitionDocument = DefinitionDocument::parse(printed.as_str()).unwrap();

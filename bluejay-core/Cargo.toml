@@ -14,6 +14,10 @@ strum = { version = "0.24", features = ["derive"] }
 paste = "1.0"
 serde_json = { version = "1.0", optional = true }
 enum-as-inner = "0.5"
+elsa = { version = "1.8.1", optional = true }
+once_cell = { version = "1.17", optional = true }
 
 [features]
+default = ["visibility"]
 serde_json = ["dep:serde_json"]
+visibility = ["dep:elsa", "dep:once_cell"]
