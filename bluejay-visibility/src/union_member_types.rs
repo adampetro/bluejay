@@ -1,16 +1,16 @@
-use crate::{Cache, UnionMemberType, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, SchemaDefinitionWithVisibility, UnionMemberType};
+use bluejay_core::definition;
 use bluejay_core::AsIter;
 use once_cell::unsync::OnceCell;
 
-pub struct UnionMemberTypes<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct UnionMemberTypes<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::UnionMemberTypes,
-    cache: &'a Cache<'a, S, W>,
-    member_types: OnceCell<Vec<UnionMemberType<'a, S, W>>>,
+    cache: &'a Cache<'a, S>,
+    member_types: OnceCell<Vec<UnionMemberType<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> UnionMemberTypes<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::UnionMemberTypes, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> UnionMemberTypes<'a, S> {
+    pub(crate) fn new(inner: &'a S::UnionMemberTypes, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -19,10 +19,8 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> UnionMemberTypes<
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
-    for UnionMemberTypes<'a, S, W>
-{
-    type Item = UnionMemberType<'a, S, W>;
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> AsIter for UnionMemberTypes<'a, S> {
+    type Item = UnionMemberType<'a, S>;
     type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
 
     fn iter(&self) -> Self::Iterator<'_> {
@@ -37,8 +35,8 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::UnionMemberTypes
-    for UnionMemberTypes<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::UnionMemberTypes
+    for UnionMemberTypes<'a, S>
 {
-    type UnionMemberType = UnionMemberType<'a, S, W>;
+    type UnionMemberType = UnionMemberType<'a, S>;
 }

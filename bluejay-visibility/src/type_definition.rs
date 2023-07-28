@@ -1,26 +1,27 @@
 use crate::{
     Cache, EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
-    ObjectTypeDefinition, ScalarTypeDefinition, UnionTypeDefinition, Warden,
+    ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinitionWithVisibility,
+    UnionTypeDefinition, Warden,
 };
-use bluejay_core::definition::{self, SchemaDefinition, TypeDefinitionReference};
+use bluejay_core::definition::{self, TypeDefinitionReference};
 use bluejay_core::BuiltinScalarDefinition;
 use enum_as_inner::EnumAsInner;
 
 #[derive(EnumAsInner)]
-pub enum TypeDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub enum TypeDefinition<'a, S: SchemaDefinitionWithVisibility> {
     BuiltinScalar(BuiltinScalarDefinition),
-    CustomScalar(ScalarTypeDefinition<'a, S, W>),
-    Object(ObjectTypeDefinition<'a, S, W>),
-    Interface(InterfaceTypeDefinition<'a, S, W>),
-    InputObject(InputObjectTypeDefinition<'a, S, W>),
-    Enum(EnumTypeDefinition<'a, S, W>),
-    Union(UnionTypeDefinition<'a, S, W>),
+    CustomScalar(ScalarTypeDefinition<'a, S>),
+    Object(ObjectTypeDefinition<'a, S>),
+    Interface(InterfaceTypeDefinition<'a, S>),
+    InputObject(InputObjectTypeDefinition<'a, S>),
+    Enum(EnumTypeDefinition<'a, S>),
+    Union(UnionTypeDefinition<'a, S>),
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> TypeDefinition<'a, S, W> {
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> TypeDefinition<'a, S> {
     pub(crate) fn new(
         type_definition: TypeDefinitionReference<'a, S::TypeDefinition>,
-        cache: &'a Cache<'a, S, W>,
+        cache: &'a Cache<'a, S>,
     ) -> Option<Self> {
         let warden = cache.warden();
         match type_definition {
@@ -47,15 +48,15 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> TypeDefiniti
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::TypeDefinition
-    for TypeDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::TypeDefinition
+    for TypeDefinition<'a, S>
 {
-    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S, W>;
-    type InputObjectTypeDefinition = InputObjectTypeDefinition<'a, S, W>;
-    type CustomScalarTypeDefinition = ScalarTypeDefinition<'a, S, W>;
-    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S, W>;
-    type EnumTypeDefinition = EnumTypeDefinition<'a, S, W>;
-    type UnionTypeDefinition = UnionTypeDefinition<'a, S, W>;
+    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S>;
+    type InputObjectTypeDefinition = InputObjectTypeDefinition<'a, S>;
+    type CustomScalarTypeDefinition = ScalarTypeDefinition<'a, S>;
+    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S>;
+    type EnumTypeDefinition = EnumTypeDefinition<'a, S>;
+    type UnionTypeDefinition = UnionTypeDefinition<'a, S>;
 
     fn as_ref(&self) -> TypeDefinitionReference<'_, Self> {
         match self {

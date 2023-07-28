@@ -1,16 +1,16 @@
-use crate::{Cache, InterfaceImplementation, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, InterfaceImplementation, SchemaDefinitionWithVisibility};
+use bluejay_core::definition;
 use bluejay_core::AsIter;
 use once_cell::unsync::OnceCell;
 
-pub struct InterfaceImplementations<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct InterfaceImplementations<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::InterfaceImplementations,
-    cache: &'a Cache<'a, S, W>,
-    interface_implementations: OnceCell<Vec<InterfaceImplementation<'a, S, W>>>,
+    cache: &'a Cache<'a, S>,
+    interface_implementations: OnceCell<Vec<InterfaceImplementation<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> InterfaceImplementations<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::InterfaceImplementations, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> InterfaceImplementations<'a, S> {
+    pub(crate) fn new(inner: &'a S::InterfaceImplementations, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -19,10 +19,8 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> InterfaceImplemen
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
-    for InterfaceImplementations<'a, S, W>
-{
-    type Item = InterfaceImplementation<'a, S, W>;
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> AsIter for InterfaceImplementations<'a, S> {
+    type Item = InterfaceImplementation<'a, S>;
     type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
 
     fn iter(&self) -> Self::Iterator<'_> {
@@ -37,8 +35,8 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
-    definition::InterfaceImplementations for InterfaceImplementations<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::InterfaceImplementations
+    for InterfaceImplementations<'a, S>
 {
-    type InterfaceImplementation = InterfaceImplementation<'a, S, W>;
+    type InterfaceImplementation = InterfaceImplementation<'a, S>;
 }

@@ -1,16 +1,16 @@
-use crate::{Cache, EnumValueDefinition, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, EnumValueDefinition, SchemaDefinitionWithVisibility};
+use bluejay_core::definition;
 use bluejay_core::AsIter;
 use once_cell::unsync::OnceCell;
 
-pub struct EnumValueDefinitions<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct EnumValueDefinitions<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::EnumValueDefinitions,
-    cache: &'a Cache<'a, S, W>,
-    enum_value_definitions: OnceCell<Vec<EnumValueDefinition<'a, S, W>>>,
+    cache: &'a Cache<'a, S>,
+    enum_value_definitions: OnceCell<Vec<EnumValueDefinition<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> EnumValueDefinitions<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::EnumValueDefinitions, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> EnumValueDefinitions<'a, S> {
+    pub(crate) fn new(inner: &'a S::EnumValueDefinitions, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -19,10 +19,8 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> EnumValueDefiniti
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
-    for EnumValueDefinitions<'a, S, W>
-{
-    type Item = EnumValueDefinition<'a, S, W>;
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> AsIter for EnumValueDefinitions<'a, S> {
+    type Item = EnumValueDefinition<'a, S>;
     type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
 
     fn iter(&self) -> Self::Iterator<'_> {
@@ -37,8 +35,8 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::EnumValueDefinitions
-    for EnumValueDefinitions<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::EnumValueDefinitions
+    for EnumValueDefinitions<'a, S>
 {
-    type EnumValueDefinition = EnumValueDefinition<'a, S, W>;
+    type EnumValueDefinition = EnumValueDefinition<'a, S>;
 }

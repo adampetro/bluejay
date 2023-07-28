@@ -1,24 +1,23 @@
 use crate::{
     Cache, EnumTypeDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
-    TypeDefinition, UnionTypeDefinition, Warden,
+    SchemaDefinitionWithVisibility, TypeDefinition, UnionTypeDefinition,
 };
 use bluejay_core::definition::{
-    self, prelude::*, BaseOutputTypeReference, OutputTypeReference, SchemaDefinition,
-    TypeDefinitionReference,
+    self, prelude::*, BaseOutputTypeReference, OutputTypeReference, TypeDefinitionReference,
 };
 use bluejay_core::BuiltinScalarDefinition;
 
-pub enum BaseOutputType<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub enum BaseOutputType<'a, S: SchemaDefinitionWithVisibility> {
     BuiltinScalar(BuiltinScalarDefinition),
-    CustomScalar(&'a ScalarTypeDefinition<'a, S, W>),
-    Object(&'a ObjectTypeDefinition<'a, S, W>),
-    Interface(&'a InterfaceTypeDefinition<'a, S, W>),
-    Enum(&'a EnumTypeDefinition<'a, S, W>),
-    Union(&'a UnionTypeDefinition<'a, S, W>),
+    CustomScalar(&'a ScalarTypeDefinition<'a, S>),
+    Object(&'a ObjectTypeDefinition<'a, S>),
+    Interface(&'a InterfaceTypeDefinition<'a, S>),
+    Enum(&'a EnumTypeDefinition<'a, S>),
+    Union(&'a UnionTypeDefinition<'a, S>),
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> BaseOutputType<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::BaseOutputType, cache: &'a Cache<'a, S, W>) -> Option<Self> {
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> BaseOutputType<'a, S> {
+    pub(crate) fn new(inner: &'a S::BaseOutputType, cache: &'a Cache<'a, S>) -> Option<Self> {
         let tdr = match inner.as_ref() {
             BaseOutputTypeReference::BuiltinScalar(bstd) => {
                 TypeDefinitionReference::BuiltinScalar(bstd)
@@ -48,14 +47,14 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> BaseOutputTy
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::BaseOutputType
-    for BaseOutputType<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::BaseOutputType
+    for BaseOutputType<'a, S>
 {
-    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S, W>;
-    type CustomScalarTypeDefinition = ScalarTypeDefinition<'a, S, W>;
-    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S, W>;
-    type EnumTypeDefinition = EnumTypeDefinition<'a, S, W>;
-    type UnionTypeDefinition = UnionTypeDefinition<'a, S, W>;
+    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S>;
+    type CustomScalarTypeDefinition = ScalarTypeDefinition<'a, S>;
+    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S>;
+    type EnumTypeDefinition = EnumTypeDefinition<'a, S>;
+    type UnionTypeDefinition = UnionTypeDefinition<'a, S>;
 
     fn as_ref(&self) -> BaseOutputTypeReference<'_, Self> {
         match self {
@@ -69,13 +68,13 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::
     }
 }
 
-pub enum OutputType<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
-    Base(BaseOutputType<'a, S, W>, bool),
+pub enum OutputType<'a, S: SchemaDefinitionWithVisibility> {
+    Base(BaseOutputType<'a, S>, bool),
     List(Box<Self>, bool),
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> OutputType<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::OutputType, cache: &'a Cache<'a, S, W>) -> Option<Self> {
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> OutputType<'a, S> {
+    pub(crate) fn new(inner: &'a S::OutputType, cache: &'a Cache<'a, S>) -> Option<Self> {
         match inner.as_ref() {
             OutputTypeReference::Base(b, required) => {
                 BaseOutputType::new(b, cache).map(|base| Self::Base(base, required))
@@ -87,10 +86,8 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> OutputType<'
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::OutputType
-    for OutputType<'a, S, W>
-{
-    type BaseOutputType = BaseOutputType<'a, S, W>;
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::OutputType for OutputType<'a, S> {
+    type BaseOutputType = BaseOutputType<'a, S>;
 
     fn as_ref(&self) -> OutputTypeReference<'_, Self> {
         match self {

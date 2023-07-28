@@ -1,15 +1,15 @@
-use crate::{DirectiveDefinition, TypeDefinition, Warden};
-use bluejay_core::definition::{prelude::*, SchemaDefinition, TypeDefinitionReference};
+use crate::{DirectiveDefinition, SchemaDefinitionWithVisibility, TypeDefinition};
+use bluejay_core::definition::{prelude::*, TypeDefinitionReference};
 use elsa::FrozenMap;
 
-pub struct Cache<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
-    warden: W,
-    type_definitions: FrozenMap<&'a str, Box<TypeDefinition<'a, S, W>>>,
-    directive_definitions: FrozenMap<&'a str, Box<DirectiveDefinition<'a, S, W>>>,
+pub struct Cache<'a, S: SchemaDefinitionWithVisibility> {
+    warden: S::Warden,
+    type_definitions: FrozenMap<&'a str, Box<TypeDefinition<'a, S>>>,
+    directive_definitions: FrozenMap<&'a str, Box<DirectiveDefinition<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> Cache<'a, S, W> {
-    pub fn new(warden: W) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> Cache<'a, S> {
+    pub fn new(warden: S::Warden) -> Self {
         Self {
             warden,
             type_definitions: FrozenMap::new(),
@@ -17,14 +17,14 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> Cache<'a, S, W> {
         }
     }
 
-    pub fn warden(&self) -> &W {
+    pub fn warden(&self) -> &S::Warden {
         &self.warden
     }
 
     pub(crate) fn get_or_create_type_definition(
         &'a self,
         type_definition: TypeDefinitionReference<'a, S::TypeDefinition>,
-    ) -> Option<&'a TypeDefinition<'a, S, W>> {
+    ) -> Option<&'a TypeDefinition<'a, S>> {
         self.type_definitions
             .get(type_definition.name())
             .or_else(|| {
@@ -35,17 +35,14 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> Cache<'a, S, W> {
             })
     }
 
-    pub(crate) fn get_type_definition(
-        &'a self,
-        name: &str,
-    ) -> Option<&'a TypeDefinition<'a, S, W>> {
+    pub(crate) fn get_type_definition(&'a self, name: &str) -> Option<&'a TypeDefinition<'a, S>> {
         self.type_definitions.get(name)
     }
 
     pub(crate) fn get_or_create_directive_definition(
         &'a self,
         directive_definition: &'a S::DirectiveDefinition,
-    ) -> &'a DirectiveDefinition<'a, S, W> {
+    ) -> &'a DirectiveDefinition<'a, S> {
         self.directive_definitions
             .get(directive_definition.name())
             .unwrap_or_else(|| {
@@ -59,7 +56,7 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> Cache<'a, S, W> {
     pub(crate) fn get_directive_definition(
         &'a self,
         name: &str,
-    ) -> Option<&'a DirectiveDefinition<'a, S, W>> {
+    ) -> Option<&'a DirectiveDefinition<'a, S>> {
         self.directive_definitions.get(name)
     }
 }

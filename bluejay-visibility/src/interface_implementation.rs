@@ -1,15 +1,15 @@
-use crate::{Cache, InterfaceTypeDefinition, Warden};
-use bluejay_core::definition::{self, SchemaDefinition, TypeDefinitionReference};
+use crate::{Cache, InterfaceTypeDefinition, SchemaDefinitionWithVisibility, Warden};
+use bluejay_core::definition::{self, TypeDefinitionReference};
 
-pub struct InterfaceImplementation<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct InterfaceImplementation<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::InterfaceImplementation,
-    interface: &'a InterfaceTypeDefinition<'a, S, W>,
+    interface: &'a InterfaceTypeDefinition<'a, S>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> InterfaceImplementation<'a, S, W> {
+impl<'a, S: SchemaDefinitionWithVisibility> InterfaceImplementation<'a, S> {
     pub(crate) fn new(
         inner: &'a S::InterfaceImplementation,
-        cache: &'a Cache<'a, S, W>,
+        cache: &'a Cache<'a, S>,
     ) -> Option<Self> {
         cache
             .warden()
@@ -32,10 +32,10 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> InterfaceImplemen
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
-    definition::InterfaceImplementation for InterfaceImplementation<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::InterfaceImplementation
+    for InterfaceImplementation<'a, S>
 {
-    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S, W>;
+    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S>;
 
     fn interface(&self) -> &Self::InterfaceTypeDefinition {
         self.interface

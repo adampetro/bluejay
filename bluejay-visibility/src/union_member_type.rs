@@ -1,13 +1,13 @@
-use crate::{Cache, ObjectTypeDefinition, Warden};
-use bluejay_core::definition::{self, SchemaDefinition, TypeDefinitionReference};
+use crate::{Cache, ObjectTypeDefinition, SchemaDefinitionWithVisibility, Warden};
+use bluejay_core::definition::{self, TypeDefinitionReference};
 
-pub struct UnionMemberType<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct UnionMemberType<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::UnionMemberType,
-    member_type: &'a ObjectTypeDefinition<'a, S, W>,
+    member_type: &'a ObjectTypeDefinition<'a, S>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> UnionMemberType<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::UnionMemberType, cache: &'a Cache<'a, S, W>) -> Option<Self> {
+impl<'a, S: SchemaDefinitionWithVisibility> UnionMemberType<'a, S> {
+    pub(crate) fn new(inner: &'a S::UnionMemberType, cache: &'a Cache<'a, S>) -> Option<Self> {
         cache
             .warden()
             .is_union_member_type_visible(inner)
@@ -29,10 +29,10 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> UnionMemberType<'
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::UnionMemberType
-    for UnionMemberType<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::UnionMemberType
+    for UnionMemberType<'a, S>
 {
-    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S, W>;
+    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S>;
 
     fn member_type(&self) -> &Self::ObjectTypeDefinition {
         self.member_type

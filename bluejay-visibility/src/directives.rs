@@ -1,16 +1,15 @@
-use crate::{Cache, Warden};
-use bluejay_core::definition::SchemaDefinition;
+use crate::{Cache, SchemaDefinitionWithVisibility};
 use bluejay_core::{AsIter, Directive, Directives as CoreDirectives};
 use once_cell::unsync::OnceCell;
 
-pub struct Directives<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct Directives<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::Directives,
-    cache: &'a Cache<'a, S, W>,
+    cache: &'a Cache<'a, S>,
     directives: OnceCell<Vec<&'a <S::Directives as CoreDirectives<true>>::Directive>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> Directives<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::Directives, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> Directives<'a, S> {
+    pub(crate) fn new(inner: &'a S::Directives, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -19,9 +18,7 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> Directives<'a, S,
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
-    for Directives<'a, S, W>
-{
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> AsIter for Directives<'a, S> {
     type Item = <S::Directives as CoreDirectives<true>>::Directive;
     type Iterator<'b> = std::iter::Copied<std::slice::Iter<'b, &'b Self::Item>> where 'a: 'b;
 
@@ -42,8 +39,6 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> CoreDirectives<true>
-    for Directives<'a, S, W>
-{
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> CoreDirectives<true> for Directives<'a, S> {
     type Directive = <S::Directives as CoreDirectives<true>>::Directive;
 }

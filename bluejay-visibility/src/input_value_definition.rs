@@ -1,44 +1,59 @@
-use crate::{Cache, Directives, InputType, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, Directives, InputType, SchemaDefinitionWithVisibility, Warden};
+use bluejay_core::definition::{self, InputValueDefinition as _, SchemaDefinition};
 
-pub struct InputValueDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
-    inner: &'a S::InputValueDefinition,
-    r#type: InputType<'a, S, W>,
-    directives: Option<Directives<'a, S, W>>,
+pub trait InputValueDefinitionWithVisibility: definition::InputValueDefinition {
+    type SchemaDefinition: SchemaDefinitionWithVisibility;
+
+    #[allow(unused_variables)]
+    fn default_value<'a>(
+        &'a self,
+        warden: &'a Cache<'a, Self::SchemaDefinition>,
+    ) -> Option<&Self::Value> {
+        definition::InputValueDefinition::default_value(self)
+    }
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> InputValueDefinition<'a, S, W> {
+pub struct InputValueDefinition<'a, S: SchemaDefinitionWithVisibility> {
+    inner: &'a <S as SchemaDefinitionWithVisibility>::InputValueDefinition,
+    r#type: InputType<'a, S>,
+    directives: Option<Directives<'a, S>>,
+    cache: &'a Cache<'a, S>,
+}
+
+impl<'a, S: SchemaDefinitionWithVisibility> InputValueDefinition<'a, S> {
     pub(crate) fn new(
-        inner: &'a S::InputValueDefinition,
-        cache: &'a Cache<'a, S, W>,
+        inner: &'a <S as SchemaDefinitionWithVisibility>::InputValueDefinition,
+        cache: &'a Cache<'a, S>,
     ) -> Option<Self> {
         cache
             .warden()
             .is_input_value_definition_visible(inner)
             .then(|| {
-                InputType::new(definition::InputValueDefinition::r#type(inner), cache).map(
-                    |r#type| Self {
+                (InputType::new(inner.r#type(), cache) as Option<InputType<'a, S>>).map(|r#type| {
+                    Self {
                         inner,
                         r#type,
                         directives: definition::InputValueDefinition::directives(inner)
                             .map(|d| Directives::new(d, cache)),
-                    },
-                )
+                        cache,
+                    }
+                })
             })
             .flatten()
     }
 
-    pub fn inner(&self) -> &'a S::InputValueDefinition {
+    pub fn inner(&self) -> &'a <S as SchemaDefinition>::InputValueDefinition {
         self.inner
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::InputValueDefinition
-    for InputValueDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::InputValueDefinition
+    for InputValueDefinition<'a, S>
 {
-    type Value = <S::InputValueDefinition as definition::InputValueDefinition>::Value;
-    type Directives = Directives<'a, S, W>;
-    type InputType = InputType<'a, S, W>;
+    type Value =
+        <<S as SchemaDefinitionWithVisibility>::InputValueDefinition as definition::InputValueDefinition>::Value;
+    type Directives = Directives<'a, S>;
+    type InputType = InputType<'a, S>;
 
     fn description(&self) -> Option<&str> {
         self.inner.description()
@@ -49,7 +64,7 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::
     }
 
     fn default_value(&self) -> Option<&Self::Value> {
-        self.inner.default_value()
+        InputValueDefinitionWithVisibility::default_value(self.inner, self.cache)
     }
 
     fn directives(&self) -> Option<&Self::Directives> {

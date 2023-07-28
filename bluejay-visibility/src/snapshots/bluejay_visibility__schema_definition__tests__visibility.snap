@@ -1,5 +1,5 @@
 ---
-source: bluejay-visibility/tests/integration_test.rs
+source: bluejay-visibility/src/schema_definition.rs
 expression: printed_schema_definition
 ---
 directive @visible on FIELD_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | SCALAR | OBJECT | INTERFACE | UNION | ENUM

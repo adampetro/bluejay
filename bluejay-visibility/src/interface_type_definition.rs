@@ -1,19 +1,19 @@
-use crate::{Cache, Directives, FieldsDefinition, InterfaceImplementations, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{
+    Cache, Directives, FieldsDefinition, InterfaceImplementations, SchemaDefinitionWithVisibility,
+};
+use bluejay_core::definition;
 use once_cell::unsync::OnceCell;
 
-pub struct InterfaceTypeDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct InterfaceTypeDefinition<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::InterfaceTypeDefinition,
-    cache: &'a Cache<'a, S, W>,
-    fields_definition: OnceCell<FieldsDefinition<'a, S, W>>,
-    interface_implementations: OnceCell<Option<InterfaceImplementations<'a, S, W>>>,
-    directives: Option<Directives<'a, S, W>>,
+    cache: &'a Cache<'a, S>,
+    fields_definition: OnceCell<FieldsDefinition<'a, S>>,
+    interface_implementations: OnceCell<Option<InterfaceImplementations<'a, S>>>,
+    directives: Option<Directives<'a, S>>,
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
-    InterfaceTypeDefinition<'a, S, W>
-{
-    pub(crate) fn new(inner: &'a S::InterfaceTypeDefinition, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> InterfaceTypeDefinition<'a, S> {
+    pub(crate) fn new(inner: &'a S::InterfaceTypeDefinition, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -29,12 +29,12 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
-    definition::InterfaceTypeDefinition for InterfaceTypeDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::InterfaceTypeDefinition
+    for InterfaceTypeDefinition<'a, S>
 {
-    type Directives = Directives<'a, S, W>;
-    type FieldsDefinition = FieldsDefinition<'a, S, W>;
-    type InterfaceImplementations = InterfaceImplementations<'a, S, W>;
+    type Directives = Directives<'a, S>;
+    type FieldsDefinition = FieldsDefinition<'a, S>;
+    type InterfaceImplementations = InterfaceImplementations<'a, S>;
 
     fn description(&self) -> Option<&str> {
         self.inner.description()

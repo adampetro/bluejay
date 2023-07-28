@@ -1,15 +1,15 @@
-use crate::{ArgumentsDefinition, Cache, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{ArgumentsDefinition, Cache, SchemaDefinitionWithVisibility};
+use bluejay_core::definition;
 use once_cell::unsync::OnceCell;
 
-pub struct DirectiveDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct DirectiveDefinition<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::DirectiveDefinition,
-    cache: &'a Cache<'a, S, W>,
-    arguments_definition: OnceCell<Option<ArgumentsDefinition<'a, S, W>>>,
+    cache: &'a Cache<'a, S>,
+    arguments_definition: OnceCell<Option<ArgumentsDefinition<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> DirectiveDefinition<'a, S, W> {
-    pub fn new(inner: &'a S::DirectiveDefinition, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> DirectiveDefinition<'a, S> {
+    pub fn new(inner: &'a S::DirectiveDefinition, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -22,10 +22,10 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> DirectiveDef
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::DirectiveDefinition
-    for DirectiveDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::DirectiveDefinition
+    for DirectiveDefinition<'a, S>
 {
-    type ArgumentsDefinition = ArgumentsDefinition<'a, S, W>;
+    type ArgumentsDefinition = ArgumentsDefinition<'a, S>;
     type DirectiveLocations =
         <S::DirectiveDefinition as definition::DirectiveDefinition>::DirectiveLocations;
 

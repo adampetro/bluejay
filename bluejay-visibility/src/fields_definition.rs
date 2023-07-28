@@ -1,16 +1,16 @@
-use crate::{Cache, FieldDefinition, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, FieldDefinition, SchemaDefinitionWithVisibility};
+use bluejay_core::definition;
 use bluejay_core::AsIter;
 use once_cell::unsync::OnceCell;
 
-pub struct FieldsDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct FieldsDefinition<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::FieldsDefinition,
-    cache: &'a Cache<'a, S, W>,
-    fields_definition: OnceCell<Vec<FieldDefinition<'a, S, W>>>,
+    cache: &'a Cache<'a, S>,
+    fields_definition: OnceCell<Vec<FieldDefinition<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> FieldsDefinition<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::FieldsDefinition, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> FieldsDefinition<'a, S> {
+    pub(crate) fn new(inner: &'a S::FieldsDefinition, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -19,10 +19,8 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> FieldsDefinition<
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
-    for FieldsDefinition<'a, S, W>
-{
-    type Item = FieldDefinition<'a, S, W>;
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> AsIter for FieldsDefinition<'a, S> {
+    type Item = FieldDefinition<'a, S>;
     type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
 
     fn iter(&self) -> Self::Iterator<'_> {
@@ -37,8 +35,8 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::FieldsDefinition
-    for FieldsDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::FieldsDefinition
+    for FieldsDefinition<'a, S>
 {
-    type FieldDefinition = FieldDefinition<'a, S, W>;
+    type FieldDefinition = FieldDefinition<'a, S>;
 }

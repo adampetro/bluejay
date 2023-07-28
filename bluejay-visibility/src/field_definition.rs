@@ -1,17 +1,19 @@
-use crate::{ArgumentsDefinition, Cache, Directives, OutputType, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{
+    ArgumentsDefinition, Cache, Directives, OutputType, SchemaDefinitionWithVisibility, Warden,
+};
+use bluejay_core::definition;
 use once_cell::unsync::OnceCell;
 
-pub struct FieldDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct FieldDefinition<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::FieldDefinition,
-    cache: &'a Cache<'a, S, W>,
-    r#type: OutputType<'a, S, W>,
-    arguments_definition: OnceCell<Option<ArgumentsDefinition<'a, S, W>>>,
-    directives: Option<Directives<'a, S, W>>,
+    cache: &'a Cache<'a, S>,
+    r#type: OutputType<'a, S>,
+    arguments_definition: OnceCell<Option<ArgumentsDefinition<'a, S>>>,
+    directives: Option<Directives<'a, S>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> FieldDefinition<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::FieldDefinition, cache: &'a Cache<'a, S, W>) -> Option<Self> {
+impl<'a, S: SchemaDefinitionWithVisibility> FieldDefinition<'a, S> {
+    pub(crate) fn new(inner: &'a S::FieldDefinition, cache: &'a Cache<'a, S>) -> Option<Self> {
         cache
             .warden()
             .is_field_definition_visible(inner)
@@ -35,12 +37,12 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> FieldDefinition<'
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::FieldDefinition
-    for FieldDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::FieldDefinition
+    for FieldDefinition<'a, S>
 {
-    type OutputType = OutputType<'a, S, W>;
-    type Directives = Directives<'a, S, W>;
-    type ArgumentsDefinition = ArgumentsDefinition<'a, S, W>;
+    type OutputType = OutputType<'a, S>;
+    type Directives = Directives<'a, S>;
+    type ArgumentsDefinition = ArgumentsDefinition<'a, S>;
 
     fn description(&self) -> Option<&str> {
         self.inner.description()

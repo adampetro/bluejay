@@ -1,16 +1,16 @@
-use crate::{Cache, InputValueDefinition, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, InputValueDefinition, SchemaDefinitionWithVisibility};
+use bluejay_core::definition;
 use bluejay_core::AsIter;
 use once_cell::unsync::OnceCell;
 
-pub struct ArgumentsDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct ArgumentsDefinition<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::ArgumentsDefinition,
-    cache: &'a Cache<'a, S, W>,
-    arguments_definition: OnceCell<Vec<InputValueDefinition<'a, S, W>>>,
+    cache: &'a Cache<'a, S>,
+    arguments_definition: OnceCell<Vec<InputValueDefinition<'a, S>>>,
 }
 
-impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> ArgumentsDefinition<'a, S, W> {
-    pub(crate) fn new(inner: &'a S::ArgumentsDefinition, cache: &'a Cache<'a, S, W>) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility> ArgumentsDefinition<'a, S> {
+    pub(crate) fn new(inner: &'a S::ArgumentsDefinition, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -19,10 +19,8 @@ impl<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> ArgumentsDefiniti
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
-    for ArgumentsDefinition<'a, S, W>
-{
-    type Item = InputValueDefinition<'a, S, W>;
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> AsIter for ArgumentsDefinition<'a, S> {
+    type Item = InputValueDefinition<'a, S>;
     type Iterator<'b> = std::slice::Iter<'b, Self::Item> where 'a: 'b;
 
     fn iter(&self) -> Self::Iterator<'_> {
@@ -37,8 +35,8 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> AsIter
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::ArgumentsDefinition
-    for ArgumentsDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::ArgumentsDefinition
+    for ArgumentsDefinition<'a, S>
 {
-    type ArgumentDefinition = InputValueDefinition<'a, S, W>;
+    type ArgumentDefinition = InputValueDefinition<'a, S>;
 }

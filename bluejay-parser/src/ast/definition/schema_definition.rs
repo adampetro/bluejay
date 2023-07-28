@@ -6,7 +6,7 @@ use crate::ast::definition::{
     InterfaceImplementations, InterfaceTypeDefinition, ObjectTypeDefinition, OutputType,
     TypeDefinition, UnionMemberType, UnionMemberTypes, UnionTypeDefinition,
 };
-use crate::ast::ConstDirectives;
+use crate::ast::{Argument, Arguments, ConstDirectives, Directive, Value};
 use crate::lexical_token::StringValue;
 use bluejay_core::definition::{
     InterfaceImplementation as CoreInterfaceImplementation,
@@ -78,6 +78,10 @@ impl<'a, C: Context> SchemaDefinition<'a, C> {
 }
 
 impl<'a, C: Context> CoreSchemaDefinition for SchemaDefinition<'a, C> {
+    type Value = Value<'a, true>;
+    type Argument = Argument<'a, true>;
+    type Arguments = Arguments<'a, true>;
+    type Directive = Directive<'a, true>;
     type Directives = ConstDirectives<'a>;
     type InputValueDefinition = InputValueDefinition<'a, C>;
     type InputFieldsDefinition = InputFieldsDefinition<'a, C>;

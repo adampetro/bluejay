@@ -1,16 +1,13 @@
-use crate::{Cache, Directives, Warden};
-use bluejay_core::definition::{self, SchemaDefinition};
+use crate::{Cache, Directives, SchemaDefinitionWithVisibility};
+use bluejay_core::definition;
 
-pub struct ScalarTypeDefinition<'a, S: SchemaDefinition, W: Warden<SchemaDefinition = S>> {
+pub struct ScalarTypeDefinition<'a, S: SchemaDefinitionWithVisibility> {
     inner: &'a S::CustomScalarTypeDefinition,
-    directives: Option<Directives<'a, S, W>>,
+    directives: Option<Directives<'a, S>>,
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> ScalarTypeDefinition<'a, S, W> {
-    pub(crate) fn new(
-        inner: &'a S::CustomScalarTypeDefinition,
-        cache: &'a Cache<'a, S, W>,
-    ) -> Self {
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> ScalarTypeDefinition<'a, S> {
+    pub(crate) fn new(inner: &'a S::CustomScalarTypeDefinition, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             directives: definition::ScalarTypeDefinition::directives(inner)
@@ -23,10 +20,10 @@ impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> ScalarTypeDe
     }
 }
 
-impl<'a, S: SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>> definition::ScalarTypeDefinition
-    for ScalarTypeDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::ScalarTypeDefinition
+    for ScalarTypeDefinition<'a, S>
 {
-    type Directives = Directives<'a, S, W>;
+    type Directives = Directives<'a, S>;
 
     fn description(&self) -> Option<&str> {
         self.inner.description()

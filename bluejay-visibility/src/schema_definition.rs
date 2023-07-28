@@ -2,31 +2,44 @@ use crate::{
     ArgumentsDefinition, BaseInputType, BaseOutputType, Cache, DirectiveDefinition, Directives,
     EnumTypeDefinition, EnumValueDefinition, EnumValueDefinitions, FieldDefinition,
     FieldsDefinition, InputFieldsDefinition, InputObjectTypeDefinition, InputType,
-    InputValueDefinition, InterfaceImplementation, InterfaceImplementations,
-    InterfaceTypeDefinition, ObjectTypeDefinition, OutputType, ScalarTypeDefinition,
-    TypeDefinition, UnionMemberType, UnionMemberTypes, UnionTypeDefinition, Warden,
+    InputValueDefinition, InputValueDefinitionWithVisibility, InterfaceImplementation,
+    InterfaceImplementations, InterfaceTypeDefinition, ObjectTypeDefinition, OutputType,
+    ScalarTypeDefinition, TypeDefinition, UnionMemberType, UnionMemberTypes, UnionTypeDefinition,
+    Warden,
 };
 use bluejay_core::definition::{self, prelude::*};
 use bluejay_core::AsIter;
 use elsa::FrozenMap;
 use once_cell::unsync::OnceCell;
 
-pub struct SchemaDefinition<'a, S: definition::SchemaDefinition, W: Warden<SchemaDefinition = S>> {
-    inner: &'a S,
-    cache: &'a Cache<'a, S, W>,
-    query: ObjectTypeDefinition<'a, S, W>,
-    mutation: Option<ObjectTypeDefinition<'a, S, W>>,
-    subscription: Option<ObjectTypeDefinition<'a, S, W>>,
-    interface_implementors: FrozenMap<&'a str, Vec<&'a ObjectTypeDefinition<'a, S, W>>>,
-    type_definitions: OnceCell<Vec<&'a TypeDefinition<'a, S, W>>>,
-    directive_definitions: OnceCell<Vec<&'a DirectiveDefinition<'a, S, W>>>,
-    schema_directives: Option<Directives<'a, S, W>>,
+pub trait SchemaDefinitionWithVisibility:
+    definition::SchemaDefinition<
+    InputValueDefinition = <Self as SchemaDefinitionWithVisibility>::InputValueDefinition,
+>
+{
+    type Warden: Warden<SchemaDefinition = Self>;
+    type InputValueDefinition: InputValueDefinitionWithVisibility<
+        InputType = Self::InputType,
+        Directives = Self::Directives,
+        Value = Self::Value,
+        SchemaDefinition = Self,
+    >;
 }
 
-impl<'a, S: definition::SchemaDefinition, W: Warden<SchemaDefinition = S>>
-    SchemaDefinition<'a, S, W>
-{
-    pub fn new(inner: &'a S, cache: &'a Cache<'a, S, W>) -> Self {
+pub struct SchemaDefinition<'a, S: SchemaDefinitionWithVisibility> {
+    inner: &'a S,
+    cache: &'a Cache<'a, S>,
+    query: ObjectTypeDefinition<'a, S>,
+    mutation: Option<ObjectTypeDefinition<'a, S>>,
+    subscription: Option<ObjectTypeDefinition<'a, S>>,
+    interface_implementors: FrozenMap<&'a str, Vec<&'a ObjectTypeDefinition<'a, S>>>,
+    type_definitions: OnceCell<Vec<&'a TypeDefinition<'a, S>>>,
+    directive_definitions: OnceCell<Vec<&'a DirectiveDefinition<'a, S>>>,
+    schema_directives: Option<Directives<'a, S>>,
+}
+
+impl<'a, S: SchemaDefinitionWithVisibility> SchemaDefinition<'a, S> {
+    pub fn new(inner: &'a S, cache: &'a Cache<'a, S>) -> Self {
         Self {
             inner,
             cache,
@@ -48,35 +61,43 @@ impl<'a, S: definition::SchemaDefinition, W: Warden<SchemaDefinition = S>>
     pub fn inner(&self) -> &'a S {
         self.inner
     }
+
+    pub fn cache(&self) -> &'a Cache<'a, S> {
+        self.cache
+    }
 }
 
-impl<'a, S: definition::SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
-    definition::SchemaDefinition for SchemaDefinition<'a, S, W>
+impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::SchemaDefinition
+    for SchemaDefinition<'a, S>
 {
-    type Directives = Directives<'a, S, W>;
-    type InputValueDefinition = InputValueDefinition<'a, S, W>;
-    type InputFieldsDefinition = InputFieldsDefinition<'a, S, W>;
-    type ArgumentsDefinition = ArgumentsDefinition<'a, S, W>;
-    type EnumValueDefinition = EnumValueDefinition<'a, S, W>;
-    type EnumValueDefinitions = EnumValueDefinitions<'a, S, W>;
-    type FieldDefinition = FieldDefinition<'a, S, W>;
-    type FieldsDefinition = FieldsDefinition<'a, S, W>;
-    type InterfaceImplementation = InterfaceImplementation<'a, S, W>;
-    type InterfaceImplementations = InterfaceImplementations<'a, S, W>;
-    type UnionMemberType = UnionMemberType<'a, S, W>;
-    type UnionMemberTypes = UnionMemberTypes<'a, S, W>;
-    type BaseInputType = BaseInputType<'a, S, W>;
-    type InputType = InputType<'a, S, W>;
-    type BaseOutputType = BaseOutputType<'a, S, W>;
-    type OutputType = OutputType<'a, S, W>;
-    type CustomScalarTypeDefinition = ScalarTypeDefinition<'a, S, W>;
-    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S, W>;
-    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S, W>;
-    type UnionTypeDefinition = UnionTypeDefinition<'a, S, W>;
-    type InputObjectTypeDefinition = InputObjectTypeDefinition<'a, S, W>;
-    type EnumTypeDefinition = EnumTypeDefinition<'a, S, W>;
-    type TypeDefinition = TypeDefinition<'a, S, W>;
-    type DirectiveDefinition = DirectiveDefinition<'a, S, W>;
+    type Value = S::Value;
+    type Argument = S::Argument;
+    type Arguments = S::Arguments;
+    type Directive = S::Directive;
+    type Directives = Directives<'a, S>;
+    type InputValueDefinition = InputValueDefinition<'a, S>;
+    type InputFieldsDefinition = InputFieldsDefinition<'a, S>;
+    type ArgumentsDefinition = ArgumentsDefinition<'a, S>;
+    type EnumValueDefinition = EnumValueDefinition<'a, S>;
+    type EnumValueDefinitions = EnumValueDefinitions<'a, S>;
+    type FieldDefinition = FieldDefinition<'a, S>;
+    type FieldsDefinition = FieldsDefinition<'a, S>;
+    type InterfaceImplementation = InterfaceImplementation<'a, S>;
+    type InterfaceImplementations = InterfaceImplementations<'a, S>;
+    type UnionMemberType = UnionMemberType<'a, S>;
+    type UnionMemberTypes = UnionMemberTypes<'a, S>;
+    type BaseInputType = BaseInputType<'a, S>;
+    type InputType = InputType<'a, S>;
+    type BaseOutputType = BaseOutputType<'a, S>;
+    type OutputType = OutputType<'a, S>;
+    type CustomScalarTypeDefinition = ScalarTypeDefinition<'a, S>;
+    type ObjectTypeDefinition = ObjectTypeDefinition<'a, S>;
+    type InterfaceTypeDefinition = InterfaceTypeDefinition<'a, S>;
+    type UnionTypeDefinition = UnionTypeDefinition<'a, S>;
+    type InputObjectTypeDefinition = InputObjectTypeDefinition<'a, S>;
+    type EnumTypeDefinition = EnumTypeDefinition<'a, S>;
+    type TypeDefinition = TypeDefinition<'a, S>;
+    type DirectiveDefinition = DirectiveDefinition<'a, S>;
     type TypeDefinitions<'b> = std::iter::Map<std::slice::Iter<'b, &'b Self::TypeDefinition>, fn(&&'b Self::TypeDefinition) -> definition::TypeDefinitionReference<'b, Self::TypeDefinition>> where 'a: 'b;
     type DirectiveDefinitions<'b> = std::iter::Copied<std::slice::Iter<'b, &'b Self::DirectiveDefinition>> where 'a: 'b;
     type InterfaceImplementors<'b> = std::iter::Copied<std::slice::Iter<'b, &'b Self::ObjectTypeDefinition>> where 'a: 'b;
@@ -181,5 +202,156 @@ impl<'a, S: definition::SchemaDefinition + 'a, W: Warden<SchemaDefinition = S>>
                 .get_directive_definition(name)
                 .map(|dd| self.cache.get_or_create_directive_definition(dd))
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        Cache, InputValueDefinitionWithVisibility, SchemaDefinition,
+        SchemaDefinitionWithVisibility, Warden,
+    };
+    use bluejay_core::{definition::prelude::*, AsIter};
+    use bluejay_parser::ast::{
+        definition::{
+            Context, DefaultContext, DefinitionDocument, InputValueDefinition,
+            SchemaDefinition as ParserSchemaDefinition,
+        },
+        Directives,
+    };
+    use bluejay_printer::definition::DisplaySchemaDefinition;
+    use std::marker::PhantomData;
+
+    impl<'a, C: Context> InputValueDefinitionWithVisibility for InputValueDefinition<'a, C> {
+        type SchemaDefinition = ParserSchemaDefinition<'a, C>;
+    }
+
+    impl<'a, C: Context> SchemaDefinitionWithVisibility for ParserSchemaDefinition<'a, C> {
+        type Warden = DirectiveWarden<'a, C>;
+        type InputValueDefinition = InputValueDefinition<'a, C>;
+    }
+
+    pub struct DirectiveWarden<'a, C: Context = DefaultContext>(
+        PhantomData<ParserSchemaDefinition<'a, C>>,
+    );
+
+    impl<'a, C: Context> DirectiveWarden<'a, C> {
+        fn has_visible_directive(directives: Option<&Directives<'a, true>>) -> bool {
+            directives.map_or(false, |directives| {
+                directives
+                    .iter()
+                    .any(|directive| directive.name() == "visible")
+            })
+        }
+
+        fn new() -> Self {
+            Self(PhantomData)
+        }
+    }
+
+    impl<'a, C: Context> Warden for DirectiveWarden<'a, C> {
+        type SchemaDefinition = ParserSchemaDefinition<'a, C>;
+
+        fn is_enum_value_definition_visible(
+            &self,
+            enum_value_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::EnumValueDefinition,
+        ) -> bool {
+            Self::has_visible_directive(enum_value_definition.directives())
+        }
+
+        fn is_field_definition_visible(
+            &self,
+            field_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::FieldDefinition,
+        ) -> bool {
+            Self::has_visible_directive(field_definition.directives())
+        }
+
+        fn is_input_value_definition_visible(
+            &self,
+            input_value_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::InputValueDefinition,
+        ) -> bool {
+            Self::has_visible_directive(input_value_definition.directives())
+        }
+
+        fn is_interface_implementation_visible(
+            &self,
+            _: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::InterfaceImplementation,
+        ) -> bool {
+            true
+        }
+
+        fn is_union_member_type_visible(
+            &self,
+            _: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::UnionMemberType,
+        ) -> bool {
+            true
+        }
+
+        fn is_directive_definition_visible(
+            &self,
+            _: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::DirectiveDefinition,
+        ) -> bool {
+            true
+        }
+
+        fn is_custom_scalar_type_definition_visible(
+            &self,
+            custom_scalar_type_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::CustomScalarTypeDefinition,
+        ) -> bool {
+            Self::has_visible_directive(custom_scalar_type_definition.directives())
+        }
+
+        fn is_enum_type_definition_visible(
+            &self,
+            enum_type_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::EnumTypeDefinition,
+        ) -> bool {
+            Self::has_visible_directive(enum_type_definition.directives())
+        }
+
+        fn is_input_object_type_definition_visible(
+            &self,
+            input_object_type_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::InputObjectTypeDefinition,
+        ) -> bool {
+            Self::has_visible_directive(input_object_type_definition.directives())
+        }
+
+        fn is_interface_type_definition_visible(
+            &self,
+            interface_type_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::InterfaceTypeDefinition,
+        ) -> bool {
+            Self::has_visible_directive(interface_type_definition.directives())
+        }
+
+        fn is_object_type_definition_visible(
+            &self,
+            object_type_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::ObjectTypeDefinition,
+        ) -> bool {
+            Self::has_visible_directive(object_type_definition.directives())
+        }
+
+        fn is_union_type_definition_visible(
+            &self,
+            union_type_definition: &<Self::SchemaDefinition as bluejay_core::definition::SchemaDefinition>::UnionTypeDefinition,
+        ) -> bool {
+            Self::has_visible_directive(union_type_definition.directives())
+        }
+    }
+
+    #[test]
+    fn test_visibility() {
+        let path = std::path::Path::new("src/test_data/schema.graphql");
+        let input = std::fs::read_to_string(path).unwrap();
+        let definition_document: DefinitionDocument = DefinitionDocument::parse(&input)
+            .unwrap_or_else(|_| panic!("Schema `{}` had parse errors", path.display()));
+        let schema_definition = ParserSchemaDefinition::try_from(&definition_document)
+            .unwrap_or_else(|_| panic!("Schema `{}` had coercion errors", path.display()));
+
+        let cache = Cache::new(DirectiveWarden::new());
+        let visibility_scoped_schema_definition = SchemaDefinition::new(&schema_definition, &cache);
+
+        let printed_schema_definition =
+            DisplaySchemaDefinition::to_string(&visibility_scoped_schema_definition);
+
+        insta::assert_snapshot!(printed_schema_definition);
     }
 }
