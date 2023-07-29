@@ -127,7 +127,11 @@ impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::SchemaDefinition
             .get_or_init(|| {
                 self.inner
                     .type_definitions()
-                    .filter_map(|tdr| self.cache.get_or_create_type_definition(tdr))
+                    .filter_map(|tdr| {
+                        self.cache
+                            .get_or_create_type_definition(tdr)
+                            .and_then(|td| td.is_valid().then_some(td))
+                    })
                     .collect()
             })
             .iter()
@@ -145,6 +149,7 @@ impl<'a, S: SchemaDefinitionWithVisibility + 'a> definition::SchemaDefinition
                     .get_type_definition(name)
                     .and_then(|tdr| self.cache.get_or_create_type_definition(tdr))
             })
+            .and_then(|td| td.is_valid().then_some(td))
             .map(TypeDefinition::as_ref)
     }
 
@@ -219,7 +224,7 @@ mod tests {
         },
         Directives,
     };
-    use bluejay_printer::definition::DisplaySchemaDefinition;
+    use bluejay_printer::definition::SchemaDefinitionPrinter;
     use std::marker::PhantomData;
 
     impl<'a, C: Context> InputValueDefinitionWithVisibility for InputValueDefinition<'a, C> {
@@ -350,7 +355,7 @@ mod tests {
         let visibility_scoped_schema_definition = SchemaDefinition::new(&schema_definition, &cache);
 
         let printed_schema_definition =
-            DisplaySchemaDefinition::to_string(&visibility_scoped_schema_definition);
+            SchemaDefinitionPrinter::to_string(&visibility_scoped_schema_definition);
 
         insta::assert_snapshot!(printed_schema_definition);
     }

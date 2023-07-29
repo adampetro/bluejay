@@ -3,8 +3,8 @@ use crate::{
     ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinitionWithVisibility,
     UnionTypeDefinition, Warden,
 };
-use bluejay_core::definition::{self, TypeDefinitionReference};
-use bluejay_core::BuiltinScalarDefinition;
+use bluejay_core::definition::{self, prelude::*, TypeDefinitionReference};
+use bluejay_core::{AsIter, BuiltinScalarDefinition};
 use enum_as_inner::EnumAsInner;
 
 #[derive(EnumAsInner)]
@@ -44,6 +44,18 @@ impl<'a, S: SchemaDefinitionWithVisibility + 'a> TypeDefinition<'a, S> {
             TypeDefinitionReference::Union(utd) => warden
                 .is_union_type_definition_visible(utd)
                 .then(|| Self::Union(UnionTypeDefinition::new(utd, cache))),
+        }
+    }
+
+    pub(crate) fn is_valid(&self) -> bool {
+        match self {
+            Self::BuiltinScalar(_) => true,
+            Self::CustomScalar(_) => true,
+            Self::Enum(etd) => !etd.enum_value_definitions().is_empty(),
+            Self::InputObject(iotd) => !iotd.input_field_definitions().is_empty(),
+            Self::Interface(itd) => !itd.fields_definition().is_empty(),
+            Self::Object(otd) => !otd.fields_definition().is_empty(),
+            Self::Union(utd) => !utd.union_member_types().is_empty(),
         }
     }
 }
